@@ -133,7 +133,7 @@ void main (void)
 	TIMER0_Init();
 
 	waitms(500); // Give PuTTY a chance to start.
-	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
+	printf("\x1b[2J"); // ANSI escape sequence: \x = hexadecimal, 1b = ESC, [2J = sequence
 
 	printf ("EFM8 Frequency measurement using Timer/Counter 0.\n"
 	        "File: %s\n"
