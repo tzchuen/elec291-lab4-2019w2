@@ -20,6 +20,12 @@ If this frequency is measured using a microcomputer system, the capacitor value 
 
 Build, using an actual `555 single timer`, `556 dual timer`, a capacitance meter that works in the 1 nF to 1μF. Use the `EFM8` board and an LCD to measure and display capacitance.
 
+## To-Do
+- [ ] Build circuit
+- [ ] C code
+- [ ] Integrate to hardware
+- [ ] Bonus
+
 ## Deliverables
 - [ ] C code
 - [ ] Picture of system
