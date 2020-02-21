@@ -1,1 +1,8 @@
 *.vscode
+*.asm
+*.hex
+*.lkr
+*.lst
+*.map
+*.obj
+*.bat
