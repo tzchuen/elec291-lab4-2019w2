@@ -20,9 +20,9 @@
 #define LCD_D7 P2_1
 #define CHARS_PER_LINE 16
 
-#define RESISTOR_555 	10000L
+#define RESISTOR_555 	10000.0
 #define RESISTOR_555_kO 10
-#define BASE_TO_MICRO 	1000000L
+#define BASE_TO_MICRO 	1000000.0
 
 unsigned char overflow_count;
 
@@ -229,11 +229,12 @@ void TIMER0_Init(void)
 
 void main (void) 
 {
-	unsigned long frequency;
-	unsigned long capacitance;
-	unsigned long capacitance_uF;
-		
 	char buff[17];
+	double frequency = 200.0; //testing value
+	double capacitance;
+	double capacitance_uF;
+		
+	
 	// Configure the LCD
 	LCD_4BIT();
 
@@ -248,30 +249,36 @@ void main (void)
 	printf ("ELEC 291 Lab 4 (2019W2)\n"
 	        "Authors: Ryan Luke Acapulco, Zhi Chuen Tan\n"
 	        "Compiled: %s, %s\n"
-			"R1=R2= %i",
+			"R1=R2= %ikOhm\n\n",
 	        __DATE__, __TIME__, RESISTOR_555_kO);
 
 	while(1)
 	{
-		TL0=0;
-		TH0=0;
-		overflow_count=0;
-		TF0=0;
-		TR0=1; // Start Timer/Counter 0
-		waitms(1000);
-		TR0=0; // Stop Timer/Counter 0
-		frequency=overflow_count*0x10000L+TH0*0x100L+TL0;  // 0x??L is long double hexadecimal
-   
-		
-		capacitance = (1.44)/((3*RESISTOR_555)*frequency);
-		capacitance_uF = capacitance * BASE_TO_MICRO;
-		sprintf(buff, "%.5lu", capacitance_uF)
-		// 		  012345678901
-		LCDprint(buff, 2, 1);
+		// printf("DEBUG: entered while(1) loop\n");
+		// TL0=0;
+		// TH0=0;
+		// overflow_count=0;
+		// TF0=0;
+		// TR0=1; // Start Timer/Counter 0
+		// waitms(1000);
+		// TR0=0; // Stop Timer/Counter 0
+		// frequency=overflow_count*0x10000L+TH0*0x100L+TL0;  // 0x??L is long double hexadecimal
+		printf("DEBUG: finished frequency calculation loop\n");
 
 		
-		printf("\rFrequency=%.4luuF\n", frequency); // %lu is unsigned long
-		printf("\rCapacitance=%.4luuF\n", capacitance_uF); // %lu is unsigned long
+		capacitance = (1.44)/((3.0*RESISTOR_555)*frequency);
+		capacitance_uF = capacitance * BASE_TO_MICRO;
+		printf("%lf, %lf\n", capacitance, capacitance_uF);
+		sprintf(buff, "%lf", capacitance_uF);
+		printf("DEBUG: finished sprintf\n");
+		// 		  012345678901
+		//getsn(buff, sizeof(buff));
+		LCDprint(buff, 2, 1);
+		printf("DEBUG: finished LCD print\n");
+
+		
+		printf("\rFrequency=%lfHz\n", frequency); // %lu is unsigned long
+		printf("\rCapacitance=%lfuF\n", capacitance_uF); // %lu is unsigned long
 		printf("\x1b[0K"); // ANSI: Clear from cursor to end of line.
 	}
 	
