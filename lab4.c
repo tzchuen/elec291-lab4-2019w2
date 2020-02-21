@@ -11,6 +11,19 @@
 #define SYSCLK      72000000L  // SYSCLK frequency in Hz
 #define BAUDRATE      115200L  // Baud rate of UART in bps
 
+#define LCD_RS P2_6
+// #define LCD_RW Px_x // Not used in this code.  Connect to GND
+#define LCD_E  P2_5
+#define LCD_D4 P2_4
+#define LCD_D5 P2_3
+#define LCD_D6 P2_2
+#define LCD_D7 P2_1
+#define CHARS_PER_LINE 16
+
+#define RESISTOR_555 	10000L
+#define RESISTOR_555_kO 10
+#define BASE_TO_MICRO 	1000000L
+
 unsigned char overflow_count;
 
 char _c51_external_startup (void)
@@ -119,6 +132,94 @@ void waitms (unsigned int ms)
 	}
 }
 
+void LCD_pulse (void)
+{
+	LCD_E=1;
+	Timer3us(40);
+	LCD_E=0;
+}
+
+void LCD_byte (unsigned char x)
+{
+	// The accumulator in the C8051Fxxx is bit addressable!
+	ACC=x; //Send high nible
+	LCD_D7=ACC_7;
+	LCD_D6=ACC_6;
+	LCD_D5=ACC_5;
+	LCD_D4=ACC_4;
+	LCD_pulse();
+	Timer3us(40);
+	ACC=x; //Send low nible
+	LCD_D7=ACC_3;
+	LCD_D6=ACC_2;
+	LCD_D5=ACC_1;
+	LCD_D4=ACC_0;
+	LCD_pulse();
+}
+
+void WriteData (unsigned char x)
+{
+	LCD_RS=1;
+	LCD_byte(x);
+	waitms(2);
+}
+
+void WriteCommand (unsigned char x)
+{
+	LCD_RS=0;
+	LCD_byte(x);
+	waitms(5);
+}
+
+void LCD_4BIT (void)
+{
+	LCD_E=0; // Resting state of LCD's enable is zero
+	// LCD_RW=0; // We are only writing to the LCD in this program
+	waitms(20);
+	// First make sure the LCD is in 8-bit mode and then change to 4-bit mode
+	WriteCommand(0x33);
+	WriteCommand(0x33);
+	WriteCommand(0x32); // Change to 4-bit mode
+
+	// Configure the LCD
+	WriteCommand(0x28);
+	WriteCommand(0x0c);
+	WriteCommand(0x01); // Clear screen command (takes some time)
+	waitms(20); // Wait for clear screen command to finsih.
+}
+
+void LCDprint(char * string, unsigned char line, bit clear)
+{
+	int j;
+
+	WriteCommand(line==2?0xc0:0x80);
+	waitms(5);
+	for(j=0; string[j]!=0; j++)	WriteData(string[j]);// Write the message
+	if(clear) for(; j<CHARS_PER_LINE; j++) WriteData(' '); // Clear the rest of the line
+}
+
+int getsn (char * buff, int len)
+{
+	int j;
+	char c;
+	
+	for(j=0; j<(len-1); j++)
+	{
+		c=getchar();
+		if ( (c=='\n') || (c=='\r') )
+		{
+			buff[j]=0;
+			return j;
+		}
+		else
+		{
+			buff[j]=c;
+		}
+	}
+	buff[j]=0;
+	return len;
+}
+
 void TIMER0_Init(void)
 {
 	TMOD&=0b_1111_0000; // Set the bits of Timer/Counter 0 to zero
@@ -128,17 +229,27 @@ void TIMER0_Init(void)
 
 void main (void) 
 {
-	unsigned long F;
-	
+	unsigned long frequency;
+	unsigned long capacitance;
+	unsigned long capacitance_uF;
+		
+	char buff[17];
+	// Configure the LCD
+	LCD_4BIT();
+
+	// 		  012345678901
+	LCDprint("Capacitance=", 1, 1);
+
 	TIMER0_Init();
 
 	waitms(500); // Give PuTTY a chance to start.
 	printf("\x1b[2J"); // ANSI escape sequence: \x = hexadecimal, 1b = ESC, [2J = sequence
 
-	printf ("EFM8 Frequency measurement using Timer/Counter 0.\n"
-	        "File: %s\n"
-	        "Compiled: %s, %s\n\n",
-	        __FILE__, __DATE__, __TIME__);
+	printf ("ELEC 291 Lab 4 (2019W2)\n"
+	        "Authors: Ryan Luke Acapulco, Zhi Chuen Tan\n"
+	        "Compiled: %s, %s\n"
+			"R1=R2= %i",
+	        __DATE__, __TIME__, RESISTOR_555_kO);
 
 	while(1)
 	{
@@ -149,9 +260,18 @@ void main (void)
 		TR0=1; // Start Timer/Counter 0
 		waitms(1000);
 		TR0=0; // Stop Timer/Counter 0
-		F=overflow_count*0x10000L+TH0*0x100L+TL0;
+		frequency=overflow_count*0x10000L+TH0*0x100L+TL0;  // 0x??L is long double hexadecimal
+   
+		
+		capacitance = (1.44)/((3*RESISTOR_555)*frequency);
+		capacitance_uF = capacitance * BASE_TO_MICRO;
+		sprintf(buff, "%.5lu", capacitance_uF)
+		// 		  012345678901
+		LCDprint(buff, 2, 1);
 
-		printf("\rf=%luHz", F);
+		
+		printf("\rFrequency=%.4luuF\n", frequency); // %lu is unsigned long
+		printf("\rCapacitance=%.4luuF\n", capacitance_uF); // %lu is unsigned long
 		printf("\x1b[0K"); // ANSI: Clear from cursor to end of line.
 	}
 	
