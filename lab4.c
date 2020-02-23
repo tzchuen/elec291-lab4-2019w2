@@ -22,7 +22,12 @@
 
 #define RESISTOR_555 	10000
 #define RESISTOR_555_kO 10
-#define BASE_TO_MICRO 	1000000
+#define BASE_TO_NANO 	1000000000
+
+#define FREQ_LCD_MSG	"              Hz"
+#define CAP_LCD_MSG 	"              nF"
+
+
 
 unsigned char overflow_count;
 
@@ -229,17 +234,29 @@ void TIMER0_Init(void)
 
 void main (void) 
 {
-	unsigned long F;
+	unsigned long frequency = 100;
+	double capacitance;
+	double denom;
+	
+	char freq_char[17];
+	char cap_char[17];
 	
 	TIMER0_Init();
+	LCD_4BIT();
 
 	waitms(500); // Give PuTTY a chance to start.
 	printf("\x1b[2J"); // ANSI escape sequence: \x = hexadecimal, 1b = ESC, [2J = sequence
 
-	printf ("EFM8 Frequency measurement using Timer/Counter 0.\n"
-	        "File: %s\n"
-	        "Compiled: %s, %s\n\n",
-	        __FILE__, __DATE__, __TIME__);
+	printf ("ELEC 291 Lab 4: 555 Timer and Capacitor Meter\n"
+	        "Author(s): Ryan Luke Acapulco, Zhi Chuen Tan\n"
+			"Lab Section: L2B (M/W 12-3pm)\n"
+			"Term: 2019W2\n\n"
+			"R_A = R_B = %ikOhm\n"
+			"Compiled: %s, %s\n\n",
+	        RESISTOR_555_kO, __DATE__, __TIME__);
+
+	LCDprint(FREQ_LCD_MSG, 1, 1);
+	LCDprint(CAP_LCD_MSG, 2, 0);
 
 	while(1)
 	{
@@ -250,9 +267,22 @@ void main (void)
 		TR0=1; // Start Timer/Counter 0
 		waitms(1000);
 		TR0=0; // Stop Timer/Counter 0
-		F=overflow_count*0x10000L+TH0*0x100L+TL0;
+		frequency=overflow_count*0x10000L+TH0*0x100L+TL0;
 
-		printf("\rf=%luHz", F);
+		denom = (double) frequency * (3 * RESISTOR_555);
+		capacitance = (1.44/denom) * BASE_TO_NANO;
+						  //1234567890123456
+		sprintf(freq_char, "       %lu", frequency);
+		sprintf(cap_char,  "       %.3f", capacitance);
+
+		LCDprint(freq_char, 1, 0);
+		LCDprint(cap_char, 2, 0);
+
+				//1234567890123456
+		LCDprint("F:", 1, 0);
+		LCDprint("C:", 2, 0);
+		
+		printf("\rF=%.3luHz, C=%.3fnF", frequency, capacitance);
 		printf("\x1b[0K"); // ANSI: Clear from cursor to end of line.
 	}
 	
