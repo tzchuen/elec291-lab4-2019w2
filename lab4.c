@@ -234,7 +234,7 @@ void TIMER0_Init(void)
 
 void main (void) 
 {
-	unsigned long frequency = 100;
+	unsigned long frequency;
 	double capacitance;
 	double denom;
 	
