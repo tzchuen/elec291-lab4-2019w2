@@ -20,9 +20,9 @@
 #define LCD_D7 P2_1
 #define CHARS_PER_LINE 16
 
-#define RESISTOR_555 	10000
-#define RESISTOR_555_kO 10
-#define BASE_TO_NANO 	1000000000
+#define RESISTOR_555 	10000		// Ra=Rb=10kOhm
+#define RESISTOR_555_kO 10			// To print to PuTTy
+#define BASE_TO_NANO 	1000000000	// convert to nano
 
 #define FREQ_LCD_MSG	"              Hz"
 #define CAP_LCD_MSG 	"              nF"
@@ -234,19 +234,20 @@ void TIMER0_Init(void)
 
 void main (void) 
 {
-	unsigned long frequency;
+	unsigned long frequency;	// same as in FreqEFM8.c
 	double capacitance;
 	double denom;
 	
-	char freq_char[17];
-	char cap_char[17];
+	char freq_char[17];		// string for frequency
+	char cap_char[17];		// string for capacitance
 	
-	TIMER0_Init();
-	LCD_4BIT();
+	TIMER0_Init();			// initialize timer0
+	LCD_4BIT();				// initialize LCD
 
 	waitms(500); // Give PuTTY a chance to start.
 	printf("\x1b[2J"); // ANSI escape sequence: \x = hexadecimal, 1b = ESC, [2J = sequence
 
+	// printf goes to PuTTy
 	printf ("ELEC 291 Lab 4: 555 Timer and Capacitor Meter\n"
 	        "Author(s): Ryan Acapulco, Zhi Chuen Tan\n"
 			"Lab Section: L2B (M/W 12-3pm)\n"
@@ -255,11 +256,20 @@ void main (void)
 			"Compiled: %s, %s\n\n",
 	        RESISTOR_555_kO, __DATE__, __TIME__);
 
+	/***************************************************
+	*		   1234567890123456
+	*  prints "              nF" and
+	*		  "              Hz"
+	*  on LCD
+	*  I'm doing it this way so it won't overlap when 
+	*  I print the actual values to LCD
+	****************************************************/
 	LCDprint(FREQ_LCD_MSG, 1, 1);
 	LCDprint(CAP_LCD_MSG, 2, 0);
 
 	while(1)
 	{
+		// timer setup, idk how this works
 		TL0=0;
 		TH0=0;
 		overflow_count=0;
@@ -268,21 +278,24 @@ void main (void)
 		waitms(1000);
 		TR0=0; // Stop Timer/Counter 0
 		frequency=overflow_count*0x10000L+TH0*0x100L+TL0;
+		
+		// explicit cast frequency to type double, otherwise value will truncate
+		denom = (double) frequency * (3 * RESISTOR_555); // denom=denominator of C=1.44/((3R)*F)
+		capacitance = (1.44/denom) * BASE_TO_NANO;		 // capacitance should be 10^-11 or smt, makes it in nF
+						 
+		// converts these to strings, so LCD can print them
+		sprintf(freq_char, "       %lu", frequency);		// %lu is type specifier for unsigned long	
+		sprintf(cap_char,  "       %.3f", capacitance);		// use %f instead of %lf otherwise code fucks itself
 
-		denom = (double) frequency * (3 * RESISTOR_555);
-		capacitance = (1.44/denom) * BASE_TO_NANO;
-						  //1234567890123456
-		sprintf(freq_char, "       %lu", frequency);
-		sprintf(cap_char,  "       %.3f", capacitance);
-
-		LCDprint(freq_char, 1, 0);
+		// prints freq/capacitance value to LCD
+		LCDprint(freq_char, 1, 0);	
 		LCDprint(cap_char, 2, 0);
 
 				//1234567890123456
 		LCDprint("F:", 1, 0);
 		LCDprint("C:", 2, 0);
 		
-		printf("\rF=%.3luHz, C=%.3fnF", frequency, capacitance);
+		printf("\rF=%.3luHz, C=%.3fnF", frequency, capacitance);	// this goes to PuTTy
 		printf("\x1b[0K"); // ANSI: Clear from cursor to end of line.
 	}
 	
