@@ -248,7 +248,7 @@ void main (void)
 	printf("\x1b[2J"); // ANSI escape sequence: \x = hexadecimal, 1b = ESC, [2J = sequence
 
 	printf ("ELEC 291 Lab 4: 555 Timer and Capacitor Meter\n"
-	        "Author(s): Ryan Luke Acapulco, Zhi Chuen Tan\n"
+	        "Author(s): Zhi Chuen Tan\n"
 			"Lab Section: L2B (M/W 12-3pm)\n"
 			"Term: 2019W2\n\n"
 			"R_A = R_B = %ikOhm\n"
