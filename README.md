@@ -34,8 +34,8 @@ Build, using an actual `555 single timer`, `556 dual timer`, a capacitance meter
 - [X] Could try a switch statement to ask for input from PuTTy, like in `EFM8_LCD_4bit.c`, to switch from nF to uF etc., e.g.
  > Enter '1' for capacitance in uF, enter '2' for capacitance in nF
 - [X] Use the same technique to print to LCD
-- [ ] Maybe make a GUI? 
+- [X] Maybe make a GUI? 
 
 ## Deliverables
-- [ ] C code
-- [ ] Picture of system
+- [X] C code
+- [X] Picture of system
